@@ -50,6 +50,10 @@ from .heart import Heart, HeartConfig, HeartState
 from .brain import Brain, BrainConfig, BrainState, APLOperator
 from .triad import TriadTracker, TriadConfig, TriadState, TriadEvent
 from .spinner_client import SpinnerClient, SpinnerClientConfig
+from .quasicrystal import (
+    QuasicrystalDynamics, QuasicrystalConfig,
+    HelixQuasicrystalCoupling,
+)
 
 
 @dataclass
@@ -76,6 +80,8 @@ class NodeConfig:
     use_spinner_z: bool = True       # Use spinner z for coupling
     enable_brain: bool = True        # Enable Brain processing
     enable_triad: bool = True        # Enable TRIAD tracking
+    enable_quasicrystal: bool = True # Enable quasicrystal dynamics
+    quasicrystal_inflate_interval: int = 100  # Steps between inflations
     
     # Logging
     log_interval: int = 100          # Steps between logs
@@ -133,7 +139,14 @@ class NodeState:
     spinner_connected: bool = False
     spinner_z: float = 0.5
     spinner_k_formation: bool = False
-    
+
+    # Quasicrystal state
+    quasicrystal_tile_ratio: float = 1.0
+    quasicrystal_golden_error: float = PHI - 1.0
+    quasicrystal_negentropy: float = 0.0
+    quasicrystal_generation: int = 0
+    combined_negentropy: float = 0.0
+
     # Events
     events: List[str] = field(default_factory=list)
 
@@ -207,7 +220,19 @@ class RosettaHelixNode:
             self.triad = TriadTracker(triad_config)
         else:
             self.triad = None
-        
+
+        # Initialize Quasicrystal
+        if self.config.enable_quasicrystal:
+            qc_config = QuasicrystalConfig(
+                initial_fat=1,
+                initial_thin=1,
+                max_generations=50,
+            )
+            qc = QuasicrystalDynamics(qc_config)
+            self.quasicrystal = HelixQuasicrystalCoupling(qc)
+        else:
+            self.quasicrystal = None
+
         # Initialize SpinnerClient
         self.spinner = SpinnerClient(
             uri=self.config.bridge_uri,
@@ -338,9 +363,34 @@ class RosettaHelixNode:
                 # Store if coherent enough
                 if coherence > 0.7:
                     self.brain.store_pattern(processed)
-        
+
         # =====================================================================
-        # 4. K-FORMATION: Check and track
+        # 4. QUASICRYSTAL: Update Penrose tiling dynamics
+        # =====================================================================
+        if self.quasicrystal:
+            # Update helix-quasicrystal coupling
+            self.state.combined_negentropy = self.quasicrystal.update(
+                z=self.state.z,
+                helix_coherence=coherence,
+            )
+
+            # Inflate quasicrystal periodically
+            if self.state.step_count % self.config.quasicrystal_inflate_interval == 0:
+                self.quasicrystal.step_quasicrystal()
+
+            # Update quasicrystal state
+            qc_state = self.quasicrystal.qc.get_state()
+            self.state.quasicrystal_tile_ratio = qc_state.tile_ratio
+            self.state.quasicrystal_golden_error = qc_state.golden_error
+            self.state.quasicrystal_negentropy = qc_state.quasicrystal_negentropy
+            self.state.quasicrystal_generation = qc_state.generation
+
+            # Check for quasicrystal stability event
+            if qc_state.is_stable and qc_state.stability_duration == 1:
+                self.state.events.append("QUASICRYSTAL_STABLE")
+
+        # =====================================================================
+        # 5. K-FORMATION: Check and track
         # =====================================================================
         k_active = check_k_formation(self.state.kappa, self.state.eta, self.state.R)
         
@@ -364,9 +414,9 @@ class RosettaHelixNode:
             self._k_formation_start_time = None
         
         self.state.k_formation = k_active
-        
+
         # =====================================================================
-        # 5. CALLBACKS AND LOGGING
+        # 6. CALLBACKS AND LOGGING
         # =====================================================================
         if self.on_state:
             await self.on_state(self.state)
@@ -409,6 +459,11 @@ class RosettaHelixNode:
             spinner_connected=self.state.spinner_connected,
             spinner_z=self.state.spinner_z,
             spinner_k_formation=self.state.spinner_k_formation,
+            quasicrystal_tile_ratio=self.state.quasicrystal_tile_ratio,
+            quasicrystal_golden_error=self.state.quasicrystal_golden_error,
+            quasicrystal_negentropy=self.state.quasicrystal_negentropy,
+            quasicrystal_generation=self.state.quasicrystal_generation,
+            combined_negentropy=self.state.combined_negentropy,
             events=self.state.events.copy(),
         )
     
@@ -542,7 +597,16 @@ class RosettaHelixNode:
                 'conservation_error': self.state.conservation_error,
                 'total_k_formations': self.triad.state.total_k_formations,
             }
-        
+
+        if self.quasicrystal:
+            summary['quasicrystal'] = {
+                'tile_ratio': self.state.quasicrystal_tile_ratio,
+                'golden_error': self.state.quasicrystal_golden_error,
+                'negentropy': self.state.quasicrystal_negentropy,
+                'generation': self.state.quasicrystal_generation,
+                'combined_negentropy': self.state.combined_negentropy,
+            }
+
         return summary
     
     def get_component_states(self) -> Dict[str, Any]:
@@ -551,6 +615,7 @@ class RosettaHelixNode:
             'heart': asdict(self.heart.get_state()),
             'brain': asdict(self.brain.get_state()) if self.brain else None,
             'triad': asdict(self.triad.get_state()) if self.triad else None,
+            'quasicrystal': self.quasicrystal.get_state() if self.quasicrystal else None,
             'spinner': self.spinner.get_stats(),
         }
 

@@ -60,6 +60,12 @@ from .brain import Brain, BrainConfig, BrainState, APLOperator, Pattern
 from .triad import TriadTracker, TriadConfig, TriadState, TriadEvent, TriadSnapshot
 from .spinner_client import SpinnerClient, SpinnerClientConfig
 from .node import RosettaHelixNode, NodeConfig, NodeState
+from .quasicrystal import (
+    QuasicrystalDynamics, QuasicrystalConfig, QuasicrystalState,
+    HelixQuasicrystalCoupling,
+    E8_MASS_RATIOS,
+    compute_e8_order_parameter,
+)
 
 __version__ = "1.0.0"
 __author__ = "Rosetta-Helix Project"
@@ -99,4 +105,10 @@ __all__ = [
     
     # Node
     'RosettaHelixNode', 'NodeConfig', 'NodeState',
+
+    # Quasicrystal (Penrose tiling dynamics)
+    'QuasicrystalDynamics', 'QuasicrystalConfig', 'QuasicrystalState',
+    'HelixQuasicrystalCoupling',
+    'E8_MASS_RATIOS',
+    'compute_e8_order_parameter',
 ]
