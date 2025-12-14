@@ -54,6 +54,19 @@ SIGMA = 36.0
 # ═══════════════════════════════════════════════════════════════════════════
 
 @dataclass
+class BridgeConfig:
+    """Configuration for the SpinnerBridge."""
+    serial_port: str = DEFAULT_SERIAL_PORT
+    serial_baud: int = SERIAL_BAUD
+    websocket_host: str = WEBSOCKET_HOST
+    websocket_port: int = WEBSOCKET_PORT
+    simulation_rate_hz: int = SIMULATION_RATE_HZ
+    state_history_size: int = STATE_HISTORY_SIZE
+    broadcast_unified_state: bool = True  # Also emit unified state format
+    unified_state_rate_hz: int = 20  # Lower rate for full unified state
+
+
+@dataclass
 class SpinnerState:
     timestamp_ms: int
     z: float
@@ -159,16 +172,24 @@ class SpinnerSimulator:
 # ═══════════════════════════════════════════════════════════════════════════
 
 class SpinnerBridge:
-    def __init__(self, serial_port: str = None, simulate: bool = False):
-        self.serial_port = serial_port
+    def __init__(self, serial_port: str = None, simulate: bool = False,
+                 config: BridgeConfig = None):
+        self.config = config or BridgeConfig()
+        self.serial_port = serial_port or self.config.serial_port
         self.simulate = simulate or not SERIAL_AVAILABLE
         self.serial: Optional['serial.Serial'] = None
         self.simulator: Optional[SpinnerSimulator] = None
         self.clients: Set = set()
-        self.state_history: deque = deque(maxlen=STATE_HISTORY_SIZE)
+        self.state_history: deque = deque(maxlen=self.config.state_history_size)
         self.current_state: Optional[SpinnerState] = None
         self.running = False
         self.command_queue: asyncio.Queue = asyncio.Queue()
+
+        # Unified state tracking (for integration with unified_state_bridge)
+        self.unified_state_counter = 0
+        self.last_unified_broadcast = 0
+        self._kuramoto_coherence = 0.0
+        self._ghmp_pattern_count = 0
     
     async def connect_serial(self) -> bool:
         """Connect to firmware via serial port."""
@@ -209,7 +230,7 @@ class SpinnerBridge:
                     self.current_state = self.simulator.step()
                     self.state_history.append(self.current_state)
                     await self.broadcast_state()
-                    await asyncio.sleep(1.0 / SIMULATION_RATE_HZ)
+                    await asyncio.sleep(1.0 / self.config.simulation_rate_hz)
                     
                 elif self.serial and self.serial.in_waiting:
                     line = self.serial.readline().decode('utf-8').strip()
@@ -244,21 +265,107 @@ class SpinnerBridge:
         """Send current state to all connected clients."""
         if not WEBSOCKETS_AVAILABLE:
             return
-            
+
         if self.current_state and self.clients:
+            # Standard spinner state message
             message = json.dumps({
                 "type": "spinner_state",
                 **asdict(self.current_state)
             })
-            
+
             disconnected = set()
             for client in self.clients:
                 try:
                     await client.send(message)
                 except Exception:
                     disconnected.add(client)
-            
+
             self.clients -= disconnected
+
+            # Unified state broadcast at lower rate
+            if self.config.broadcast_unified_state:
+                now = self.current_state.timestamp_ms
+                interval_ms = 1000 / self.config.unified_state_rate_hz
+                if now - self.last_unified_broadcast >= interval_ms:
+                    await self._broadcast_unified_state()
+                    self.last_unified_broadcast = now
+
+    async def _broadcast_unified_state(self):
+        """Broadcast full unified state for integration."""
+        if not self.current_state or not self.clients:
+            return
+
+        s = self.current_state
+
+        # Build unified state message compatible with UnifiedStateBridge
+        unified = {
+            "type": "unified_state",
+            "timestamp_ms": s.timestamp_ms,
+
+            # Core spinner state
+            "z": s.z,
+            "delta_s_neg": s.delta_s_neg,
+            "tier": s.tier,
+            "phase": s.phase,
+            "kappa": s.kappa,
+            "eta": s.eta,
+
+            # TRIAD state
+            "triad": {
+                "rank": s.rank,
+                "k_formation": s.k_formation,
+                "k_formation_duration_ms": s.k_formation_duration_ms,
+                "lambda_decay": 1.0 - s.kappa,  # Conservation: κ + λ = 1
+            },
+
+            # Kuramoto state (simulated when no hardware)
+            "kuramoto": {
+                "coherence": self._compute_kuramoto_coherence(s),
+                "mean_phase": 0.0,  # Would come from Heart module
+                "coupling_strength": s.delta_s_neg * 2.0,
+            },
+
+            # GHMP state (simulated when no hardware)
+            "ghmp": {
+                "pattern_count": self._ghmp_pattern_count,
+                "active_operators": self._get_active_operators(s),
+                "parity": "even" if s.delta_s_neg > 0.5 else "odd",
+            },
+        }
+
+        message = json.dumps(unified)
+        for client in self.clients:
+            try:
+                await client.send(message)
+            except Exception:
+                pass
+
+    def _compute_kuramoto_coherence(self, state: SpinnerState) -> float:
+        """Estimate Kuramoto coherence from spinner state."""
+        # At z_c, coherence peaks due to coupling peak
+        # r ≈ delta_s_neg when near critical
+        base = state.delta_s_neg * 0.8
+        # Add smooth variation based on tier
+        tier_bonus = state.tier / 10.0 * 0.2
+        self._kuramoto_coherence = min(1.0, base + tier_bonus)
+        return self._kuramoto_coherence
+
+    def _get_active_operators(self, state: SpinnerState) -> list:
+        """Get list of APL operators available at current tier."""
+        # Tier-gated operators (from APL operator hierarchy)
+        ALL_OPERATORS = ["∂", "+", "×", "÷", "⍴", "↓"]  # CLOSURE, FUSION, AMPLIFY, DECOHERE, GROUP, SEPARATE
+        TIER_THRESHOLDS = [0, 2, 3, 4, 5, 6]  # Min tier for each operator
+
+        available = []
+        for op, min_tier in zip(ALL_OPERATORS, TIER_THRESHOLDS):
+            if state.tier >= min_tier:
+                available.append(op)
+
+        # At K-formation, all operators become available
+        if state.k_formation:
+            available = ALL_OPERATORS.copy()
+
+        return available
     
     async def handle_client(self, websocket, path):
         """Handle WebSocket client connection."""
@@ -298,10 +405,12 @@ class SpinnerBridge:
         if WEBSOCKETS_AVAILABLE:
             server = await websockets.serve(
                 self.handle_client,
-                WEBSOCKET_HOST,
-                WEBSOCKET_PORT
+                self.config.websocket_host,
+                self.config.websocket_port
             )
-            print(f"[BRIDGE] WebSocket server on ws://{WEBSOCKET_HOST}:{WEBSOCKET_PORT}")
+            print(f"[BRIDGE] WebSocket server on ws://{self.config.websocket_host}:{self.config.websocket_port}")
+            if self.config.broadcast_unified_state:
+                print(f"[BRIDGE] Unified state enabled at {self.config.unified_state_rate_hz} Hz")
         
         # Start serial/simulator reader
         serial_task = asyncio.create_task(self.read_serial())
