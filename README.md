@@ -111,54 +111,62 @@ Requirements:
 ## Directory Structure
 
 ```
-nuclear-spinner-rosetta-helix-monorepo/
-├── firmware/                    # STM32H7 firmware (C)
-│   ├── src/                     # Source files
-│   │   ├── main.c               # Entry point
-│   │   ├── rotor_control.c      # Motor control, z mapping
-│   │   ├── threshold_logic.c    # Tier detection, K-formation
-│   │   ├── pulse_control.c      # RF pulse sequences
-│   │   ├── comm_protocol.c      # JSON communication
-│   │   ├── neural_interface.c   # Neural coupling
-│   │   └── training_modules.c   # 19 training modules
-│   ├── include/                 # Header files
-│   │   └── physics_constants.h  # Physics constants
-│   ├── drivers/                 # HAL drivers
-│   ├── sim/                     # Host simulation
-│   └── Makefile                 # Build system
-├── bridge/                      # Bridge service (Python)
-│   ├── spinner_bridge.py        # Serial ↔ WebSocket
-│   └── requirements.txt         # Dependencies
-├── rosetta-helix/               # Rosetta-Helix system (Python)
+Rosetta-Nuclear-Spinner/
+├── rosetta-helix/               # Core Rosetta-Helix package (Python)
 │   └── src/
-│       ├── __init__.py
-│       ├── physics.py           # Shared physics
+│       ├── __init__.py          # Package exports
+│       ├── physics.py           # Shared physics constants & functions
 │       ├── heart.py             # 60 Kuramoto oscillators
 │       ├── brain.py             # GHMP processing
-│       ├── triad.py             # TRIAD tracking
-│       ├── spinner_client.py    # WebSocket client
-│       └── node.py              # Integrated node
+│       ├── triad.py             # TRIAD threshold tracking
+│       ├── spinner_client.py    # WebSocket client for spinner
+│       ├── node.py              # Integrated node controller
+│       ├── network_v3.py        # Neural network implementation
+│       └── collapse_engine.py   # State collapse engine
+│
+├── bridge/                      # Bridge service (Python)
+│   ├── __init__.py
+│   ├── spinner_bridge.py        # Serial ↔ WebSocket bridge
+│   └── quantum_apl_bridge.py    # APL bridge utilities
+│
 ├── training/                    # Training system (Python)
-│   ├── src/
-│   │   ├── physics_constants.py # Physics constants
-│   │   └── unified_workflow.py  # Nightly workflow
-│   ├── configs/
-│   │   └── nightly.yaml         # Nightly configuration
-│   └── runs/                    # Run artifacts
-├── scripts/                     # Utility scripts
-│   ├── start_system.sh          # Full stack startup
-│   ├── test_integration.py      # Integration test
-│   └── analyze_session.py       # Data analysis
-├── docs/                        # Documentation
-│   ├── INTEGRATION_GUIDE.md     # Complete integration guide
-│   ├── PHYSICS_SPEC.md          # Physics specification
-│   └── NEURAL_PROTOCOL.md       # Neural interface protocol
+│   ├── __init__.py
+│   └── src/
+│       ├── __init__.py
+│       └── unified_nightly_workflow.py  # Nightly training workflow
+│
+├── nuclear_spinner_firmware/    # STM32H7 firmware (C)
+│   ├── src/                     # Source files
+│   ├── include/                 # Headers (physics_constants.h)
+│   ├── drivers/                 # HAL drivers
+│   ├── docs/                    # Firmware documentation
+│   ├── tools/                   # Python tools
+│   └── CHANGELOG.md             # Version history
+│
+├── src/                         # JavaScript APL engine
+│   ├── quantum_apl_engine.js    # Main APL engine
+│   ├── constants.js             # JS physics constants
+│   ├── dsl_patterns.js          # DSL pattern matching
+│   └── quantum_apl_python/      # Python APL bindings
+│
 ├── tests/                       # Test suites
-│   ├── integration/             # Integration tests
-│   └── unit/                    # Unit tests
+├── scripts/                     # Utility scripts
+├── docs/                        # Documentation
+│   ├── guides/                  # Setup and usage guides
+│   ├── reports/                 # Training and research reports
+│   └── reference/               # Reference materials
+├── data/                        # Data and artifacts
+│   ├── results/                 # Training results
+│   └── models/                  # Model weights
+├── configs/                     # Configuration files
+├── schemas/                     # JSON schemas
+├── examples/                    # Usage examples
+├── archive/                     # Historical/reference content
+│
 ├── .github/workflows/           # CI/CD
 │   └── unified-nightly-training.yml
 ├── pyproject.toml               # Python project config
+├── package.json                 # Node.js config
 ├── Makefile                     # Top-level build
 └── README.md                    # This file
 ```
