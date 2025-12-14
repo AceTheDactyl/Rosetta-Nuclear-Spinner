@@ -1,0 +1,19 @@
+{
+  "name": "nightly",
+  "version": "v2824",
+  "run_id": "run_20251213_162136",
+  "tags": [
+    "nightly",
+    "automated",
+    "unified",
+    "validated"
+  ],
+  "description": "Unified nightly build #2824 - All 19 modules passed",
+  "promoted_at": "2025-12-13T16:21:36.906141+00:00",
+  "metrics": {
+    "modules_passed": 19,
+    "k_formations": 1584,
+    "final_z": 0.8670903315693271,
+    "negentropy": 0.9999591742706597
+  }
+}

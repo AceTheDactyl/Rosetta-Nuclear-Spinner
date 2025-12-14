@@ -1,0 +1,382 @@
+{
+  "run_number": 2824,
+  "run_id": "run_20251213_162136",
+  "started_at": "2025-12-13T16:21:36.897181+00:00",
+  "completed_at": "2025-12-13T16:21:36.906942+00:00",
+  "duration_seconds": 0.009755611419677734,
+  "full_depth": {
+    "started_at": "2025-12-13T16:21:36.897606+00:00",
+    "completed_at": "2025-12-13T16:21:36.903259+00:00",
+    "duration_seconds": 0.005654335021972656,
+    "modules_total": 19,
+    "modules_passed": 19,
+    "modules_failed": 0,
+    "modules_skipped": 0,
+    "total_steps": 1900,
+    "total_k_formations": 1584,
+    "max_negentropy": 0.9999999993042383,
+    "final_z": 0.8770712520298984,
+    "final_kappa": 0.6178949103875295,
+    "physics_valid": true,
+    "module_results": [
+      {
+        "name": "n0_silent_laws_enforcement",
+        "class_name": "N0SilentLawsEnforcer",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00030159950256347656,
+        "final_z": 0.8672395403606654,
+        "final_kappa": 0.6181757418795096,
+        "k_formations": 81,
+        "max_negentropy": 0.9999999704355857,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "kuramoto_layer",
+        "class_name": "KuramotoLayer",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00021982192993164062,
+        "final_z": 0.8677996250689193,
+        "final_kappa": 0.6180733894387502,
+        "k_formations": 94,
+        "max_negentropy": 0.9999974294900845,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "physical_learner",
+        "class_name": "PhysicalLearner",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002281665802001953,
+        "final_z": 0.852313354031642,
+        "final_kappa": 0.6182767993176297,
+        "k_formations": 76,
+        "max_negentropy": 0.9999985051326985,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "apl_training_loop",
+        "class_name": "APLTrainingLoop",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00022602081298828125,
+        "final_z": 0.8847460565892593,
+        "final_kappa": 0.6179382218487143,
+        "k_formations": 82,
+        "max_negentropy": 0.9999996286155026,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "apl_pytorch_training",
+        "class_name": "APLPyTorchTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002257823944091797,
+        "final_z": 0.8539541888827198,
+        "final_kappa": 0.61824779866982,
+        "k_formations": 88,
+        "max_negentropy": 0.9999993240550327,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "full_apl_training",
+        "class_name": "FullAPLTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002181529998779297,
+        "final_z": 0.8659936329751192,
+        "final_kappa": 0.6181324931983013,
+        "k_formations": 61,
+        "max_negentropy": 0.9999999636621649,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "helix_nn",
+        "class_name": "HelixNN",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002467632293701172,
+        "final_z": 0.8550483822172369,
+        "final_kappa": 0.6180295572211643,
+        "k_formations": 87,
+        "max_negentropy": 0.9999995050467811,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "prismatic_helix_training",
+        "class_name": "PrismaticHelixTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002815723419189453,
+        "final_z": 0.87684894799329,
+        "final_kappa": 0.618135636971217,
+        "k_formations": 87,
+        "max_negentropy": 0.9999998895672366,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "full_helix_integration",
+        "class_name": "FullHelixIntegration",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00021529197692871094,
+        "final_z": 0.8724322478442659,
+        "final_kappa": 0.618138395634463,
+        "k_formations": 94,
+        "max_negentropy": 0.9999998947575987,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "wumbo_apl_automated_training",
+        "class_name": "WUMBOAPLTrainingEngine",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002148151397705078,
+        "final_z": 0.861149774419447,
+        "final_kappa": 0.6180090474285473,
+        "k_formations": 83,
+        "max_negentropy": 0.9999972680609559,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "wumbo_integrated_training",
+        "class_name": "WumboIntegratedTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00024509429931640625,
+        "final_z": 0.8785541070304779,
+        "final_kappa": 0.618047938408503,
+        "k_formations": 87,
+        "max_negentropy": 0.9999999937998596,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "quasicrystal_formation_dynamics",
+        "class_name": "QuasiCrystalFormation",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002446174621582031,
+        "final_z": 0.866936838144742,
+        "final_kappa": 0.6178772889983971,
+        "k_formations": 83,
+        "max_negentropy": 0.9999999213179747,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "triad_threshold_dynamics",
+        "class_name": "TriadThresholdDynamics",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.0002143383026123047,
+        "final_z": 0.8372709540565196,
+        "final_kappa": 0.6176453095248254,
+        "k_formations": 82,
+        "max_negentropy": 0.999994643653028,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "liminal_generator",
+        "class_name": "LiminalGenerator",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00022912025451660156,
+        "final_z": 0.8536141653681504,
+        "final_kappa": 0.618293369725602,
+        "k_formations": 90,
+        "max_negentropy": 0.9999965057358114,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "feedback_loop",
+        "class_name": "FeedbackLoop",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00024318695068359375,
+        "final_z": 0.8798262014793392,
+        "final_kappa": 0.6183346066130775,
+        "k_formations": 79,
+        "max_negentropy": 0.9999997221643971,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "unified_helix_training",
+        "class_name": "UnifiedHelixTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00021958351135253906,
+        "final_z": 0.8758029389043372,
+        "final_kappa": 0.6185839045041737,
+        "k_formations": 76,
+        "max_negentropy": 0.999999202234901,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "hierarchical_training",
+        "class_name": "HierarchicalTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00021696090698242188,
+        "final_z": 0.8420541435849996,
+        "final_kappa": 0.6182509341076305,
+        "k_formations": 85,
+        "max_negentropy": 0.9999999993042383,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "rosetta_helix_training",
+        "class_name": "RosettaHelixTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00024390220642089844,
+        "final_z": 0.9035700384555356,
+        "final_kappa": 0.61765985448884,
+        "k_formations": 87,
+        "max_negentropy": 0.9999990302346847,
+        "error": null,
+        "metrics": {}
+      },
+      {
+        "name": "nightly_integrated_training",
+        "class_name": "NightlyIntegratedTraining",
+        "status": "PASS",
+        "steps_run": 100,
+        "duration_seconds": 0.00023365020751953125,
+        "final_z": 0.8770712520298984,
+        "final_kappa": 0.6178949103875295,
+        "k_formations": 82,
+        "max_negentropy": 0.9999999604370554,
+        "error": null,
+        "metrics": {}
+      }
+    ]
+  },
+  "helix_engine": {
+    "run_id": "run_20251213_162136",
+    "status": "completed",
+    "gates_passed": true,
+    "final_z": 0.8670903315693271,
+    "final_kappa": 0.6179298388563427,
+    "negentropy": 0.9999591742706597,
+    "duration_seconds": 0.0014810562133789062,
+    "total_steps": 1000
+  },
+  "validations": [
+    {
+      "z_seed": 0.6180339887498948,
+      "phase": "ABSENCE",
+      "delta_s_neg": 0.10926373746660328,
+      "distance_to_lens": 0.2479914150345438,
+      "tier": "t7",
+      "at_critical": false
+    },
+    {
+      "z_seed": 0.8660254037844386,
+      "phase": "THE_LENS",
+      "delta_s_neg": 1.0,
+      "distance_to_lens": 0.0,
+      "tier": "t9",
+      "at_critical": true
+    },
+    {
+      "z_seed": 0.9,
+      "phase": "PRESENCE",
+      "delta_s_neg": 0.9592976903823723,
+      "distance_to_lens": 0.033974596215561426,
+      "tier": "t9",
+      "at_critical": false
+    },
+    {
+      "z_seed": 0.92,
+      "phase": "PRESENCE",
+      "delta_s_neg": 0.9004350412161889,
+      "distance_to_lens": 0.05397459621556144,
+      "tier": "t9",
+      "at_critical": false
+    },
+    {
+      "z_seed": 0.8770712520298984,
+      "phase": "PRESENCE",
+      "delta_s_neg": 0.9956172449410093,
+      "distance_to_lens": 0.011045848245459844,
+      "tier": "t9",
+      "at_critical": false
+    },
+    {
+      "z_seed": 0.8670903315693271,
+      "phase": "THE_LENS",
+      "delta_s_neg": 0.9999591742706597,
+      "distance_to_lens": 0.0010649277848885363,
+      "tier": "t9",
+      "at_critical": true
+    }
+  ],
+  "gates_check": {
+    "fd_all_passed": true,
+    "fd_has_k_formations": true,
+    "fd_physics_valid": true,
+    "he_gates_passed": true,
+    "he_min_negentropy": true,
+    "he_min_z": true,
+    "overall_passed": true,
+    "gate_details": [
+      {
+        "name": "Full Depth - All modules",
+        "passed": true,
+        "value": "19/19"
+      },
+      {
+        "name": "Full Depth - K-formations",
+        "passed": true,
+        "value": 1584
+      },
+      {
+        "name": "Full Depth - Physics valid",
+        "passed": true,
+        "value": "\u03ba+\u03bb=1.0000000000"
+      },
+      {
+        "name": "Helix Engine - Gates",
+        "passed": true,
+        "value": "completed"
+      },
+      {
+        "name": "Helix Engine - min_negentropy",
+        "passed": true,
+        "value": "0.999959 >= 0.7"
+      },
+      {
+        "name": "Helix Engine - min_final_z",
+        "passed": true,
+        "value": "0.867090 >= 0.85"
+      }
+    ]
+  },
+  "model_promoted": true,
+  "pr_created": true,
+  "overall_status": "success",
+  "physics_constants": {
+    "phi": 1.618033988749895,
+    "phi_inv": 0.6180339887498948,
+    "z_critical": 0.8660254037844386,
+    "sigma": 36.0,
+    "coupling_conservation": 0.9999999999999999
+  }
+}

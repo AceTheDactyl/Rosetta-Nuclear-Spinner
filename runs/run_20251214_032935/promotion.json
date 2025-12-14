@@ -1,0 +1,19 @@
+{
+  "name": "nightly",
+  "version": "v7666",
+  "run_id": "run_20251214_032935",
+  "tags": [
+    "nightly",
+    "automated",
+    "unified",
+    "validated"
+  ],
+  "description": "Unified nightly build #7666 - All 19 modules passed",
+  "promoted_at": "2025-12-14T03:29:35.210465+00:00",
+  "metrics": {
+    "modules_passed": 19,
+    "k_formations": 1561,
+    "final_z": 0.8662878234247431,
+    "negentropy": 0.9999975208966387
+  }
+}

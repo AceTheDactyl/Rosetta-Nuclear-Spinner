@@ -1,0 +1,126 @@
+{
+  "metadata": {
+    "version": "0.1.0",
+    "signature": "extended-physics|v0.1.0|helix"
+  },
+  "quasicrystal": {
+    "formation_dynamics": {
+      "final_order_param": 0.619693927778828,
+      "final_negentropy": 0.9999008106067212
+    },
+    "phason": {
+      "K1_K2_ratio": 2.0,
+      "D_phason": 1e-18,
+      "connection_to_phi": "tile_ratio"
+    }
+  },
+  "holographic": {
+    "jacobson": {
+      "unruh_temp_1ms2": 4.05501352274523e-21,
+      "result": "einstein_equations_from_thermodynamics"
+    },
+    "verlinde": {
+      "a0_ms2": 6.595434075999999e-10,
+      "mond_example": {
+        "a_N": 5.3127427999999997e-11,
+        "a_D": 1.8718932902316746e-10,
+        "enhancement": 3.5234028084922064
+      }
+    },
+    "consciousness_bound": {
+      "bekenstein_bits": 3.6076714962001386e+42,
+      "neural_bits": 470000000000000.0,
+      "saturation_ratio": 1.3027793702809085e-28
+    }
+  },
+  "omega_point": {
+    "tipler": {
+      "alpha": 2.0,
+      "result": "divergent_information"
+    },
+    "convergent_complexity": {
+      "final_z": 0.8538297943174631,
+      "peak_complexity_step": "140",
+      "peak_complexity_z": 0.7489926152825475
+    }
+  },
+  "e8_critical": {
+    "mass_ratios": [
+      1,
+      1.618033988749895,
+      2.618033988749895,
+      3.23606797749979,
+      4.23606797749979,
+      5.854101966249685,
+      7.47213595499958,
+      10.090169943749475
+    ],
+    "m2_m1_equals_phi": "True",
+    "penrose_connection": {
+      "projection_chain": "E8 \u2192 H4 \u2192 H3 \u2192 H2 \u2192 Penrose",
+      "cos_2pi_5": 0.30901699437494745,
+      "involves_phi": true
+    }
+  },
+  "synthesis": {
+    "z_interpretations": [
+      {
+        "domain": "Quasicrystal",
+        "meaning": "Order parameter for \u03c6-ordering",
+        "at_zc": "z \u2192 z_c: tile ratio \u2192 \u03c6"
+      },
+      {
+        "domain": "Holographic",
+        "meaning": "Position relative to holographic screen",
+        "at_zc": "z_c: entropy saturation"
+      },
+      {
+        "domain": "Spin-1/2",
+        "meaning": "|S|/\u210f = \u221a(s(s+1)) for s=1/2",
+        "at_zc": "z_c = \u221a3/2 exactly"
+      },
+      {
+        "domain": "Phase transition",
+        "meaning": "Reduced temperature (T-T_c)/T_c",
+        "at_zc": "z_c: critical point"
+      },
+      {
+        "domain": "Information",
+        "meaning": "\u03a6/\u03a6_max integrated info ratio",
+        "at_zc": "z_c: optimal integration"
+      },
+      {
+        "domain": "Omega point",
+        "meaning": "\u03c4/\u03c4_\u03a9 conformal time ratio",
+        "at_zc": "z_c: threshold approach"
+      }
+    ],
+    "sigma_interpretations": [
+      {
+        "domain": "Group theory",
+        "formula": "|S\u2083|\u00b2 = 6\u00b2 = 36",
+        "meaning": "Squared symmetric group"
+      },
+      {
+        "domain": "Product group",
+        "formula": "|S\u2083 \u00d7 S\u2083| = 36",
+        "meaning": "Independent triadic actions"
+      },
+      {
+        "domain": "Representation",
+        "formula": "\u03a3 d\u00b2_i for S\u2083 \u00d7 S\u2083 irreps",
+        "meaning": "9 irreps, dimensions 1,1,1,1,2,2,2,2,4"
+      },
+      {
+        "domain": "Geometry",
+        "formula": "6 faces \u00d7 6 vertices of cube",
+        "meaning": "Hexahedral duality"
+      },
+      {
+        "domain": "Combinatorics",
+        "formula": "3\u00b2 \u00d7 2\u00b2 = 9 \u00d7 4",
+        "meaning": "Triadic \u00d7 binary factors"
+      }
+    ]
+  }
+}

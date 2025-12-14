@@ -1,0 +1,11 @@
+{
+  "run_id": "run_20251214_032935",
+  "status": "completed",
+  "gates_passed": true,
+  "duration_seconds": 0.0015213489532470703,
+  "final_metrics": {
+    "z": 0.8662878234247431,
+    "kappa": 0.6177627341612919,
+    "negentropy": 0.9999975208966387
+  }
+}
