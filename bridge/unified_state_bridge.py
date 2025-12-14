@@ -34,18 +34,56 @@ import math
 from dataclasses import dataclass, field
 from typing import Optional, Callable, List, Dict, Any, Tuple
 from enum import IntEnum
-import websockets
 
-# Import physics constants
+# Optional websockets import
+try:
+    import websockets
+    WEBSOCKETS_AVAILABLE = True
+except ImportError:
+    WEBSOCKETS_AVAILABLE = False
+    print("[UNIFIED-BRIDGE] websockets not installed, real-time streaming disabled")
+
+# Import physics constants with fallback
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent / "rosetta-helix" / "src"))
 
-from rosetta_helix.src.physics import (
-    PHI, PHI_INV, Z_CRITICAL, SIGMA,
-    compute_delta_s_neg, check_k_formation,
-    Phase, Tier, TOLERANCE_GOLDEN
-)
+try:
+    from physics import (
+        PHI, PHI_INV, Z_CRITICAL, SIGMA,
+        compute_delta_s_neg, check_k_formation,
+        Phase, Tier, TOLERANCE_GOLDEN
+    )
+except ImportError:
+    # Fallback constants if rosetta-helix not in path
+    PHI = (1 + math.sqrt(5)) / 2
+    PHI_INV = 1 / PHI
+    Z_CRITICAL = math.sqrt(3) / 2
+    SIGMA = 36.0
+    TOLERANCE_GOLDEN = 0.001
+
+    def compute_delta_s_neg(z: float) -> float:
+        return math.exp(-SIGMA * (z - Z_CRITICAL) ** 2)
+
+    def check_k_formation(kappa: float, eta: float, rank: int) -> bool:
+        return kappa >= 0.92 and eta > PHI_INV and rank >= 7
+
+    class Phase:
+        ABSENCE = 0
+        THE_LENS = 1
+        PRESENCE = 2
+
+    class Tier:
+        ABSENCE = 0
+        REACTIVE = 1
+        MEMORY = 2
+        PATTERN = 3
+        LEARNING = 4
+        ADAPTIVE = 5
+        UNIVERSAL = 6
+        META = 7
+        SOVEREIGN = 8
+        TRANSCENDENT = 9
 
 
 # =============================================================================
@@ -354,12 +392,16 @@ class UnifiedStateBridge:
         self._violations_detected = 0
 
         # Connection
-        self._ws: Optional[websockets.WebSocketClientProtocol] = None
+        self._ws: Optional[Any] = None  # websockets.WebSocketClientProtocol when available
         self._connected = False
         self._running = False
 
     async def connect(self) -> bool:
         """Connect to spinner bridge WebSocket"""
+        if not WEBSOCKETS_AVAILABLE:
+            print("[UnifiedStateBridge] websockets not installed, cannot connect")
+            return False
+
         try:
             self._ws = await websockets.connect(self.uri)
             self._connected = True
@@ -401,10 +443,11 @@ class UnifiedStateBridge:
                 if max_packets and packets >= max_packets:
                     break
 
-        except websockets.exceptions.ConnectionClosed:
-            print("[UnifiedStateBridge] Connection closed")
         except Exception as e:
-            print(f"[UnifiedStateBridge] Error: {e}")
+            if "ConnectionClosed" in type(e).__name__:
+                print("[UnifiedStateBridge] Connection closed")
+            else:
+                print(f"[UnifiedStateBridge] Error: {e}")
         finally:
             self._running = False
 

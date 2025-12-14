@@ -29,10 +29,17 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Tuple, Callable
 from enum import IntEnum
 
-from .physics import (
-    PHI, PHI_INV, PHI_INV_SQ, Z_CRITICAL, SIGMA,
-    compute_delta_s_neg, TOLERANCE_GOLDEN
-)
+# Import physics with fallback for both package and direct usage
+try:
+    from .physics import (
+        PHI, PHI_INV, PHI_INV_SQ, Z_CRITICAL, SIGMA,
+        compute_delta_s_neg, TOLERANCE_GOLDEN
+    )
+except ImportError:
+    from physics import (
+        PHI, PHI_INV, PHI_INV_SQ, Z_CRITICAL, SIGMA,
+        compute_delta_s_neg, TOLERANCE_GOLDEN
+    )
 
 
 # =============================================================================

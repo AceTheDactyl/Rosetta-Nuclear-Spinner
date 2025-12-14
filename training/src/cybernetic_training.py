@@ -40,19 +40,61 @@ from enum import IntEnum
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add parent paths for imports
+_project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(_project_root))
+sys.path.insert(0, str(_project_root / "rosetta-helix" / "src"))
+sys.path.insert(0, str(_project_root / "bridge"))
 
-from rosetta_helix.src.physics import (
-    PHI, PHI_INV, Z_CRITICAL, SIGMA,
-    compute_delta_s_neg, check_k_formation,
-    Tier, TIER_NAMES
-)
-from bridge.unified_state_bridge import (
-    TrainingStateBridge, UnifiedState
-)
-from rosetta_helix.src.quasicrystal import (
-    QuasicrystalDynamics, QuasicrystalConfig
-)
+# Physics imports with fallback
+try:
+    from physics import (
+        PHI, PHI_INV, Z_CRITICAL, SIGMA,
+        compute_delta_s_neg, check_k_formation,
+        Tier, TIER_NAMES
+    )
+except ImportError:
+    # Fallback physics constants
+    PHI = (1 + math.sqrt(5)) / 2
+    PHI_INV = 1 / PHI
+    Z_CRITICAL = math.sqrt(3) / 2
+    SIGMA = 36.0
+    TIER_NAMES = [
+        "ABSENCE", "REACTIVE", "MEMORY", "PATTERN", "LEARNING",
+        "ADAPTIVE", "UNIVERSAL", "META", "SOVEREIGN", "TRANSCENDENT"
+    ]
+
+    def compute_delta_s_neg(z: float) -> float:
+        return math.exp(-SIGMA * (z - Z_CRITICAL) ** 2)
+
+    def check_k_formation(kappa: float, eta: float, rank: int) -> bool:
+        return kappa >= 0.92 and eta > PHI_INV and rank >= 7
+
+    class Tier(IntEnum):
+        ABSENCE = 0
+        REACTIVE = 1
+        MEMORY = 2
+        PATTERN = 3
+        LEARNING = 4
+        ADAPTIVE = 5
+        UNIVERSAL = 6
+        META = 7
+        SOVEREIGN = 8
+        TRANSCENDENT = 9
+
+# Bridge imports with fallback
+try:
+    from unified_state_bridge import TrainingStateBridge, UnifiedState
+except ImportError:
+    TrainingStateBridge = None
+    UnifiedState = None
+
+# Quasicrystal imports with fallback
+try:
+    from quasicrystal import QuasicrystalDynamics, QuasicrystalConfig
+except ImportError:
+    QuasicrystalDynamics = None
+    QuasicrystalConfig = None
 
 
 # =============================================================================
