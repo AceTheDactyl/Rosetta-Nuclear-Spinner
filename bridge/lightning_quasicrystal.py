@@ -556,8 +556,9 @@ class LightningQuasicrystalSystem:
         if not pent_seeds:
             return 0.0
 
-        # 5-fold order parameter
-        phases = [math.exp(5j * s.orientation) for s in pent_seeds]
+        # 5-fold order parameter (use cmath for complex exponential)
+        import cmath
+        phases = [cmath.exp(5j * s.orientation) for s in pent_seeds]
         weights = [s.radius * s.stability for s in pent_seeds]
         total_weight = sum(weights)
 
