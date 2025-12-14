@@ -4,8 +4,18 @@ spinner_bridge.py
 ─────────────────
 Bridges Nuclear Spinner firmware to Rosetta-Helix via WebSocket.
 
+Enhanced with:
+- 60 Kuramoto oscillators for neural synchronization
+- Grid cell neural plates with hexagonal symmetry
+- Electromagnetic training assistance
+- Negentropy-driven coupling at z_c = √3/2
+
+The Kuramoto model: dθᵢ/dt = ωᵢ + (K/N) Σⱼ sin(θⱼ - θᵢ)
+60 oscillators → 360°/60 = 6° spacing
+Hexagonal symmetry at 60° intervals: sin(60°) = √3/2 = z_c
+
 Usage:
-    python spinner_bridge.py [--port /dev/ttyACM0] [--simulate]
+    python spinner_bridge.py [--port /dev/ttyACM0] [--simulate] [--neural]
 """
 
 import asyncio
@@ -14,8 +24,16 @@ import argparse
 import math
 import random
 from collections import deque
-from dataclasses import dataclass, asdict
-from typing import Optional, Set, Callable
+from dataclasses import dataclass, asdict, field
+from typing import Optional, Set, Callable, Dict, Any, List
+
+# Try to import numpy for neural systems
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    print("[BRIDGE] numpy not installed, neural systems disabled")
 
 # Try to import serial, fall back to simulation if not available
 try:
@@ -31,6 +49,33 @@ try:
 except ImportError:
     WEBSOCKETS_AVAILABLE = False
     print("[BRIDGE] websockets not installed")
+
+# Neural system imports (optional)
+NEURAL_AVAILABLE = False
+if NUMPY_AVAILABLE:
+    try:
+        from .kuramoto_neural import (
+            KuramotoNeuralSystem, NeuralTrainingInterface,
+            KuramotoSystemState, N_OSCILLATORS
+        )
+        from .grid_cell_plates import (
+            GridCellPlateSystem, PlateSpinnerCoupling,
+            PlateSystemState, N_PLATES, CELLS_PER_PLATE
+        )
+        NEURAL_AVAILABLE = True
+    except ImportError:
+        try:
+            from kuramoto_neural import (
+                KuramotoNeuralSystem, NeuralTrainingInterface,
+                KuramotoSystemState, N_OSCILLATORS
+            )
+            from grid_cell_plates import (
+                GridCellPlateSystem, PlateSpinnerCoupling,
+                PlateSystemState, N_PLATES, CELLS_PER_PLATE
+            )
+            NEURAL_AVAILABLE = True
+        except ImportError:
+            print("[BRIDGE] Neural modules not available")
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -64,6 +109,37 @@ class BridgeConfig:
     state_history_size: int = STATE_HISTORY_SIZE
     broadcast_unified_state: bool = True  # Also emit unified state format
     unified_state_rate_hz: int = 20  # Lower rate for full unified state
+
+    # Neural system configuration
+    enable_neural: bool = True           # Enable 60-oscillator Kuramoto system
+    enable_grid_cells: bool = True       # Enable grid cell neural plates
+    enable_em_training: bool = True      # Enable electromagnetic training
+    kuramoto_dt: float = 0.01            # Kuramoto integration timestep
+    neural_broadcast_hz: int = 10        # Neural state broadcast rate
+
+
+@dataclass
+class NeuralState:
+    """State of the neural interface systems."""
+    timestamp_ms: int
+
+    # Kuramoto system
+    kuramoto_r: float                    # Synchronization order parameter
+    kuramoto_psi: float                  # Mean phase
+    kuramoto_hex: float                  # Hexagonal order (6-fold)
+    kuramoto_K: float                    # Current coupling strength
+    kuramoto_synchronized: bool
+
+    # Grid cell plates
+    grid_coherence: float                # Global plate coherence
+    grid_hex_order: float                # Hexagonal pattern order
+    grid_score: float                    # Spatial gridness score
+    plate_activations: List[float]       # Per-plate EM activation
+
+    # Training metrics
+    learning_rate: float                 # Adaptive learning rate
+    resonance: float                     # Spinner-plate resonance
+    total_energy: float                  # Energy expenditure
 
 
 @dataclass
@@ -190,6 +266,65 @@ class SpinnerBridge:
         self.last_unified_broadcast = 0
         self._kuramoto_coherence = 0.0
         self._ghmp_pattern_count = 0
+
+        # Neural interface systems (60 Kuramoto oscillators + grid cells)
+        self.neural_enabled = (NEURAL_AVAILABLE and
+                               self.config.enable_neural)
+        self.kuramoto_system: Optional[Any] = None
+        self.neural_trainer: Optional[Any] = None
+        self.grid_plates: Optional[Any] = None
+        self.plate_coupling: Optional[Any] = None
+        self.current_neural_state: Optional[NeuralState] = None
+        self.last_neural_broadcast = 0
+
+        if self.neural_enabled:
+            self._init_neural_systems()
+
+    def _init_neural_systems(self):
+        """Initialize the 60-oscillator Kuramoto and grid cell systems."""
+        print("[BRIDGE] Initializing neural interface...")
+        print(f"         60 Kuramoto oscillators (6° spacing)")
+        print(f"         sin(60°) = √3/2 = z_c = {Z_CRITICAL:.6f}")
+
+        # Create Kuramoto system
+        self.kuramoto_system = KuramotoNeuralSystem(
+            n_oscillators=60,
+            omega_mean=1.0,
+            omega_spread=0.1,
+            dt=self.config.kuramoto_dt
+        )
+
+        # Create neural training interface
+        self.neural_trainer = NeuralTrainingInterface(self.kuramoto_system)
+
+        # Enable EM training protocol if configured
+        if self.config.enable_em_training:
+            self.neural_trainer.start_em_protocol()
+            print("         EM training protocol enabled")
+
+        # Create grid cell plate system if enabled
+        if self.config.enable_grid_cells:
+            self.grid_plates = GridCellPlateSystem(
+                plate_spacing=0.1,
+                cells_per_plate=10
+            )
+            self.plate_coupling = PlateSpinnerCoupling(self.grid_plates)
+            print(f"         6 neural plates ({N_PLATES}×{CELLS_PER_PLATE} cells)")
+
+        # Register callbacks
+        self.kuramoto_system.on_sync(self._on_kuramoto_sync)
+        self.kuramoto_system.on_phase_transition(self._on_phase_transition)
+
+        print("[BRIDGE] Neural systems initialized")
+
+    def _on_kuramoto_sync(self, state):
+        """Callback when Kuramoto system achieves synchronization."""
+        print(f"[NEURAL] ★ SYNC ACHIEVED: r={state.r:.4f}")
+
+    def _on_phase_transition(self, state):
+        """Callback when phase transition occurs (K > K_c)."""
+        if state.r > 0.5:
+            print(f"[NEURAL] Phase transition: K/K_c={state.K/state.K_critical:.2f}")
     
     async def connect_serial(self) -> bool:
         """Connect to firmware via serial port."""
@@ -261,12 +396,72 @@ class SpinnerBridge:
             self.simulator.set_target_z(0.0)
             print("[SIM] Emergency stop")
     
+    def _step_neural_systems(self, z: float) -> Optional[NeuralState]:
+        """
+        Step the neural interface systems with current z-coordinate.
+
+        Couples spinner z to:
+        - Kuramoto coupling K (K ∝ ΔS_neg(z))
+        - Grid cell plate activation (EM coupling)
+        - Training adaptation (negentropy-modulated)
+        """
+        if not self.neural_enabled:
+            return None
+
+        timestamp = self.current_state.timestamp_ms if self.current_state else 0
+
+        # Step Kuramoto system with spinner z
+        kuramoto_metrics = self.neural_trainer.training_step_update(z)
+
+        # Step grid cell plates if enabled
+        grid_coherence = 0.0
+        grid_hex = 0.0
+        grid_score = 0.0
+        plate_activations = []
+        resonance = 0.0
+
+        if self.plate_coupling:
+            plate_state = self.plate_coupling.forward_coupling(z)
+            training_signal = self.plate_coupling.backward_coupling(plate_state)
+
+            grid_coherence = plate_state.global_coherence
+            grid_hex = plate_state.hexagonal_order
+            grid_score = plate_state.grid_score
+            plate_activations = plate_state.plate_activations
+            resonance = self.plate_coupling.get_resonance_measure()
+
+        # Build neural state
+        self.current_neural_state = NeuralState(
+            timestamp_ms=timestamp,
+            kuramoto_r=kuramoto_metrics['r'],
+            kuramoto_psi=0.0,  # Mean phase from system
+            kuramoto_hex=kuramoto_metrics['r_hex'],
+            kuramoto_K=kuramoto_metrics['K'],
+            kuramoto_synchronized=kuramoto_metrics['synchronized'],
+            grid_coherence=grid_coherence,
+            grid_hex_order=grid_hex,
+            grid_score=grid_score,
+            plate_activations=plate_activations,
+            learning_rate=kuramoto_metrics['learning_rate'],
+            resonance=resonance,
+            total_energy=kuramoto_metrics['total_energy']
+        )
+
+        # Update coherence for unified state
+        self._kuramoto_coherence = kuramoto_metrics['r']
+
+        return self.current_neural_state
+
     async def broadcast_state(self):
         """Send current state to all connected clients."""
         if not WEBSOCKETS_AVAILABLE:
             return
 
         if self.current_state and self.clients:
+            # Step neural systems with current z
+            if self.neural_enabled:
+                self._step_neural_systems(self.current_state.z)
+
             # Standard spinner state message
             message = json.dumps({
                 "type": "spinner_state",
@@ -282,6 +477,14 @@ class SpinnerBridge:
 
             self.clients -= disconnected
 
+            # Neural state broadcast at lower rate
+            if self.neural_enabled and self.current_neural_state:
+                now = self.current_state.timestamp_ms
+                interval_ms = 1000 / self.config.neural_broadcast_hz
+                if now - self.last_neural_broadcast >= interval_ms:
+                    await self._broadcast_neural_state()
+                    self.last_neural_broadcast = now
+
             # Unified state broadcast at lower rate
             if self.config.broadcast_unified_state:
                 now = self.current_state.timestamp_ms
@@ -290,12 +493,58 @@ class SpinnerBridge:
                     await self._broadcast_unified_state()
                     self.last_unified_broadcast = now
 
+    async def _broadcast_neural_state(self):
+        """Broadcast neural system state."""
+        if not self.current_neural_state or not self.clients:
+            return
+
+        n = self.current_neural_state
+        neural_msg = {
+            "type": "neural_state",
+            "timestamp_ms": n.timestamp_ms,
+            "kuramoto": {
+                "r": n.kuramoto_r,
+                "psi": n.kuramoto_psi,
+                "hex_order": n.kuramoto_hex,
+                "K": n.kuramoto_K,
+                "synchronized": n.kuramoto_synchronized,
+                "n_oscillators": 60,
+                "angular_spacing_deg": 6.0,
+            },
+            "grid_cells": {
+                "coherence": n.grid_coherence,
+                "hex_order": n.grid_hex_order,
+                "grid_score": n.grid_score,
+                "plate_activations": n.plate_activations,
+                "n_plates": 6,
+                "cells_per_plate": 10,
+            },
+            "training": {
+                "learning_rate": n.learning_rate,
+                "resonance": n.resonance,
+                "total_energy": n.total_energy,
+            },
+            "physics": {
+                "z_critical": Z_CRITICAL,
+                "sin_60": math.sqrt(3) / 2,
+                "connection": "sin(60°) = √3/2 = z_c",
+            }
+        }
+
+        message = json.dumps(neural_msg)
+        for client in self.clients:
+            try:
+                await client.send(message)
+            except Exception:
+                pass
+
     async def _broadcast_unified_state(self):
         """Broadcast full unified state for integration."""
         if not self.current_state or not self.clients:
             return
 
         s = self.current_state
+        n = self.current_neural_state
 
         # Build unified state message compatible with UnifiedStateBridge
         unified = {
@@ -318,11 +567,23 @@ class SpinnerBridge:
                 "lambda_decay": 1.0 - s.kappa,  # Conservation: κ + λ = 1
             },
 
-            # Kuramoto state (simulated when no hardware)
+            # Kuramoto state (from real 60-oscillator system if available)
             "kuramoto": {
-                "coherence": self._compute_kuramoto_coherence(s),
-                "mean_phase": 0.0,  # Would come from Heart module
-                "coupling_strength": s.delta_s_neg * 2.0,
+                "coherence": n.kuramoto_r if n else self._compute_kuramoto_coherence(s),
+                "mean_phase": n.kuramoto_psi if n else 0.0,
+                "coupling_strength": n.kuramoto_K if n else s.delta_s_neg * 2.0,
+                "hex_order": n.kuramoto_hex if n else 0.0,
+                "synchronized": n.kuramoto_synchronized if n else False,
+                "n_oscillators": 60,
+            },
+
+            # Grid cell neural plate state
+            "grid_cells": {
+                "coherence": n.grid_coherence if n else 0.0,
+                "hex_order": n.grid_hex_order if n else 0.0,
+                "grid_score": n.grid_score if n else 0.0,
+                "plate_activations": n.plate_activations if n else [],
+                "resonance": n.resonance if n else 0.0,
             },
 
             # GHMP state (simulated when no hardware)
@@ -330,6 +591,19 @@ class SpinnerBridge:
                 "pattern_count": self._ghmp_pattern_count,
                 "active_operators": self._get_active_operators(s),
                 "parity": "even" if s.delta_s_neg > 0.5 else "odd",
+            },
+
+            # Training metrics
+            "training": {
+                "learning_rate": n.learning_rate if n else 0.01,
+                "total_energy": n.total_energy if n else 0.0,
+            },
+
+            # Physics connection
+            "physics": {
+                "z_critical": Z_CRITICAL,
+                "sin_60_deg": math.sqrt(3) / 2,
+                "hex_connection": "sin(60°) = √3/2 = z_c",
             },
         }
 
@@ -447,15 +721,55 @@ class SpinnerBridge:
 # ═══════════════════════════════════════════════════════════════════════════
 
 def main():
-    parser = argparse.ArgumentParser(description="Nuclear Spinner Bridge Service")
+    parser = argparse.ArgumentParser(
+        description="Nuclear Spinner Bridge Service with Neural Interface",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Neural Interface:
+  The bridge includes a 60-oscillator Kuramoto system and 6 neural plates
+  for grid cell dynamics. The Kuramoto coupling strength K is driven by
+  the spinner's z-coordinate:
+
+    dθᵢ/dt = ωᵢ + (K/N) Σⱼ sin(θⱼ - θᵢ)
+
+  Key connection: sin(60°) = √3/2 = z_c (critical point)
+
+  60 oscillators → 6° angular spacing → hexagonal symmetry
+        """
+    )
     parser.add_argument('--port', '-p', default=DEFAULT_SERIAL_PORT,
                         help=f'Serial port (default: {DEFAULT_SERIAL_PORT})')
     parser.add_argument('--simulate', '-s', action='store_true',
                         help='Run in simulation mode (no hardware)')
+    parser.add_argument('--neural', '-n', action='store_true', default=True,
+                        help='Enable neural interface (default: enabled)')
+    parser.add_argument('--no-neural', action='store_true',
+                        help='Disable neural interface')
+    parser.add_argument('--no-em', action='store_true',
+                        help='Disable electromagnetic training')
+    parser.add_argument('--no-grid', action='store_true',
+                        help='Disable grid cell plates')
     args = parser.parse_args()
-    
-    bridge = SpinnerBridge(serial_port=args.port, simulate=args.simulate)
+
+    # Build configuration
+    config = BridgeConfig(
+        enable_neural=args.neural and not args.no_neural,
+        enable_em_training=not args.no_em,
+        enable_grid_cells=not args.no_grid,
+    )
+
+    # Print banner
+    print("╔══════════════════════════════════════════════════════════════╗")
+    print("║        Nuclear Spinner Bridge with Neural Interface         ║")
+    print("╠══════════════════════════════════════════════════════════════╣")
+    print(f"║  z_c = √3/2 = {Z_CRITICAL:.6f}  |  sin(60°) = {math.sqrt(3)/2:.6f}        ║")
+    print("║  60 Kuramoto oscillators  |  6 neural plates                ║")
+    print("╚══════════════════════════════════════════════════════════════╝")
+
+    bridge = SpinnerBridge(serial_port=args.port, simulate=args.simulate,
+                           config=config)
     asyncio.run(bridge.run())
+
 
 if __name__ == "__main__":
     main()
