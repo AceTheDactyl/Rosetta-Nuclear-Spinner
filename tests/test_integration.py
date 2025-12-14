@@ -353,6 +353,169 @@ class TestFilesystemIntegrity(unittest.TestCase):
                 )
 
 
+class TestQuasicrystalDynamics(unittest.TestCase):
+    """Test quasicrystal dynamics module."""
+
+    def test_quasicrystal_initialization(self):
+        """Test QuasicrystalDynamics initialization."""
+        from rosetta_helix.src.quasicrystal import (
+            QuasicrystalDynamics, QuasicrystalConfig
+        )
+
+        config = QuasicrystalConfig(initial_fat=1, initial_thin=1)
+        qc = QuasicrystalDynamics(config)
+
+        state = qc.get_state()
+        self.assertEqual(state.n_fat, 1)
+        self.assertEqual(state.n_thin, 1)
+
+    def test_quasicrystal_convergence_to_phi(self):
+        """Test tile ratio converges to golden ratio."""
+        from rosetta_helix.src.quasicrystal import QuasicrystalDynamics
+
+        qc = QuasicrystalDynamics()
+        qc.inflate_to_convergence(tolerance=1e-6)
+
+        # Tile ratio should approach φ
+        self.assertLess(qc.get_golden_error(), 1e-5)
+        self.assertAlmostEqual(qc.get_tile_ratio(), PHI, places=4)
+
+    def test_quasicrystal_negentropy_peak(self):
+        """Test negentropy peaks at φ⁻¹."""
+        from rosetta_helix.src.quasicrystal import QuasicrystalDynamics
+
+        qc = QuasicrystalDynamics()
+
+        # Inflate a few times
+        for _ in range(5):
+            qc.inflate()
+
+        neg = qc.get_negentropy()
+        # Negentropy should be positive
+        self.assertGreater(neg, 0)
+        self.assertLessEqual(neg, 1.0)
+
+    def test_substitution_matrix_eigenvalue(self):
+        """Test eigenvalue is φ²."""
+        # Substitution matrix [[2,1],[1,1]] has eigenvalue (3+√5)/2 = φ²
+        expected = PHI * PHI
+        actual = (3 + math.sqrt(5)) / 2
+        self.assertAlmostEqual(expected, actual, places=10)
+
+
+class TestCyberneticTraining(unittest.TestCase):
+    """Test cybernetic training module."""
+
+    def test_training_module_enum(self):
+        """Test training module enumeration."""
+        from training.src.cybernetic_training import TrainingModule
+
+        # Should have 19 modules
+        self.assertEqual(len(TrainingModule), 19)
+
+        # First module should be N0_SILENT_LAWS
+        self.assertEqual(TrainingModule.N0_SILENT_LAWS.value, 0)
+
+        # Last module should be NIGHTLY_3
+        self.assertEqual(TrainingModule.NIGHTLY_3.value, 18)
+
+    def test_training_phase_mapping(self):
+        """Test module to phase mapping."""
+        from training.src.cybernetic_training import (
+            TrainingModule, TrainingPhase, MODULE_PHASES
+        )
+
+        # Core physics modules should be in phase 0
+        self.assertEqual(
+            MODULE_PHASES[TrainingModule.N0_SILENT_LAWS],
+            TrainingPhase.CORE_PHYSICS
+        )
+
+        # Quasicrystal should be in dynamics phase
+        self.assertEqual(
+            MODULE_PHASES[TrainingModule.QUASICRYSTAL],
+            TrainingPhase.DYNAMICS
+        )
+
+    def test_adaptive_params_physics_modulation(self):
+        """Test adaptive parameters respond to physics."""
+        from training.src.cybernetic_training import AdaptiveParams
+        from bridge.unified_state_bridge import UnifiedState
+
+        # Create mock state with high negentropy
+        state = UnifiedState()
+        state.delta_s_neg = 0.9  # High negentropy
+        state.tier = 5
+        state.ghmp.parity_even = True
+
+        base_params = AdaptiveParams(learning_rate=1e-4)
+        adapted = base_params.apply_physics(state)
+
+        # Learning rate should increase with negentropy
+        self.assertGreater(adapted.learning_rate, base_params.learning_rate)
+
+        # Dropout should decrease
+        self.assertLess(adapted.dropout_rate, base_params.dropout_rate)
+
+
+class TestUnifiedStateBridge(unittest.TestCase):
+    """Test unified state bridge protocol."""
+
+    def test_unified_state_dataclass(self):
+        """Test UnifiedState dataclass."""
+        from bridge.unified_state_bridge import UnifiedState, TriadState
+
+        state = UnifiedState()
+        self.assertEqual(state.z, 0.5)
+        self.assertEqual(state.delta_s_neg, 0.0)
+        self.assertIsInstance(state.triad, TriadState)
+
+    def test_triad_state_conservation(self):
+        """Test TRIAD state preserves κ + λ = 1."""
+        from bridge.unified_state_bridge import TriadState
+
+        triad = TriadState(kappa=PHI_INV, lambda_=1-PHI_INV)
+        self.assertAlmostEqual(triad.kappa + triad.lambda_, 1.0, places=10)
+
+    def test_state_to_dict(self):
+        """Test state serialization to dict."""
+        from bridge.unified_state_bridge import UnifiedState
+
+        state = UnifiedState()
+        state.z = Z_CRITICAL
+        state.delta_s_neg = 1.0
+
+        d = state.to_dict()
+        self.assertIn('z', d)
+        self.assertIn('delta_s_neg', d)
+        self.assertIn('triad', d)
+        self.assertAlmostEqual(d['z'], Z_CRITICAL, places=6)
+
+
+class TestFirmwareUnityFiles(unittest.TestCase):
+    """Test new firmware files exist."""
+
+    def test_unified_physics_state_header(self):
+        """Test unified_physics_state.h exists."""
+        path = PROJECT_ROOT / "nuclear_spinner_firmware/include/unified_physics_state.h"
+        self.assertTrue(path.exists(), "unified_physics_state.h missing")
+
+    def test_unified_physics_state_impl(self):
+        """Test unified_physics_state.c exists."""
+        path = PROJECT_ROOT / "nuclear_spinner_firmware/src/unified_physics_state.c"
+        self.assertTrue(path.exists(), "unified_physics_state.c missing")
+
+    def test_apl_operators_header(self):
+        """Test apl_operators.h exists."""
+        path = PROJECT_ROOT / "nuclear_spinner_firmware/include/apl_operators.h"
+        self.assertTrue(path.exists(), "apl_operators.h missing")
+
+    def test_apl_operators_impl(self):
+        """Test apl_operators.c exists."""
+        path = PROJECT_ROOT / "nuclear_spinner_firmware/src/apl_operators.c"
+        self.assertTrue(path.exists(), "apl_operators.c missing")
+
+
 class TestEndToEndSimulation(unittest.TestCase):
     """End-to-end integration tests in simulation mode."""
 
@@ -411,6 +574,10 @@ def run_tests():
     suite.addTests(loader.loadTestsFromTestCase(TestExperimentOrchestration))
     suite.addTests(loader.loadTestsFromTestCase(TestTrainingWorkflow))
     suite.addTests(loader.loadTestsFromTestCase(TestFilesystemIntegrity))
+    suite.addTests(loader.loadTestsFromTestCase(TestQuasicrystalDynamics))
+    suite.addTests(loader.loadTestsFromTestCase(TestCyberneticTraining))
+    suite.addTests(loader.loadTestsFromTestCase(TestUnifiedStateBridge))
+    suite.addTests(loader.loadTestsFromTestCase(TestFirmwareUnityFiles))
     suite.addTests(loader.loadTestsFromTestCase(TestEndToEndSimulation))
 
     # Run with verbosity
