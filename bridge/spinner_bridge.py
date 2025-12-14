@@ -267,6 +267,9 @@ class SpinnerBridge:
         self._kuramoto_coherence = 0.0
         self._ghmp_pattern_count = 0
 
+        # Hex cycle tracking
+        self._hex_cycle_active = False
+
         # Neural interface systems (60 Kuramoto oscillators + grid cells)
         self.neural_enabled = (NEURAL_AVAILABLE and
                                self.config.enable_neural)
@@ -388,13 +391,90 @@ class SpinnerBridge:
                 await asyncio.sleep(0.1)
     
     def process_simulator_command(self, cmd: dict):
-        """Process command in simulation mode."""
-        if cmd.get('cmd') == 'set_z':
-            self.simulator.set_target_z(cmd.get('value', 0.5))
-            print(f"[SIM] Target z set to {cmd.get('value')}")
-        elif cmd.get('cmd') == 'stop':
+        """Process command in simulation mode.
+
+        Supports JSON protocol commands:
+        - set_z: Set z-coordinate target
+        - set_rpm: Set RPM target
+        - stop: Emergency stop
+        - hex_cycle: Hexagonal z-cycling
+        - dwell_lens: Dwell at z_c
+        - get_state: Request immediate state
+        - ping: Connectivity check
+        """
+        cmd_type = cmd.get('cmd', '')
+
+        if cmd_type == 'set_z':
+            value = cmd.get('value', 0.5)
+            self.simulator.set_target_z(value)
+            print(f"[SIM] Target z set to {value:.4f}")
+
+        elif cmd_type == 'set_rpm':
+            # Convert RPM to z-coordinate
+            rpm = cmd.get('value', 5000)
+            z = (rpm - 100) / 9900  # Linear mapping
+            z = max(0.0, min(1.0, z))
+            self.simulator.set_target_z(z)
+            print(f"[SIM] Target RPM set to {rpm} (z={z:.4f})")
+
+        elif cmd_type == 'stop':
             self.simulator.set_target_z(0.0)
+            self._hex_cycle_active = False
             print("[SIM] Emergency stop")
+
+        elif cmd_type == 'hex_cycle':
+            dwell_s = cmd.get('dwell_s', 30.0)
+            cycles = cmd.get('cycles', 10)
+            asyncio.create_task(self._run_hex_cycle(dwell_s, cycles))
+            print(f"[SIM] Starting hex cycle: {cycles} cycles, {dwell_s}s dwell")
+
+        elif cmd_type == 'dwell_lens':
+            duration_s = cmd.get('duration_s', 60.0)
+            self.simulator.set_target_z(Z_CRITICAL)
+            print(f"[SIM] Dwelling at z_c={Z_CRITICAL:.6f} for {duration_s}s")
+
+        elif cmd_type == 'get_state':
+            print("[SIM] State requested")
+
+        elif cmd_type == 'ping':
+            print("[SIM] Pong!")
+
+        else:
+            print(f"[SIM] Unknown command: {cmd_type}")
+
+    async def _run_hex_cycle(self, dwell_s: float, cycles: int):
+        """Run hexagonal z-cycling pattern.
+
+        Visits 6 vertices based on hexagonal symmetry:
+        - v0: z = 0
+        - v1: z = z_c (THE LENS)
+        - v2: z = z_c
+        - v3: z = 0
+        - v4: z = z_c/2
+        - v5: z = z_c/2
+
+        This creates a pattern that visits THE LENS twice per cycle.
+        """
+        hex_vertices = [0.0, Z_CRITICAL, Z_CRITICAL, 0.0, Z_CRITICAL * 0.5, Z_CRITICAL * 0.5]
+
+        self._hex_cycle_active = True
+
+        for cycle in range(cycles):
+            if not self._hex_cycle_active:
+                break
+
+            for vertex_idx, z_target in enumerate(hex_vertices):
+                if not self._hex_cycle_active:
+                    break
+
+                self.simulator.set_target_z(z_target)
+                print(f"[HEX] Cycle {cycle+1}/{cycles} vertex {vertex_idx}: z={z_target:.4f}")
+
+                # Dwell at vertex
+                await asyncio.sleep(dwell_s)
+
+        self._hex_cycle_active = False
+        print(f"[HEX] Hex cycle complete")
     
     def _step_neural_systems(self, z: float) -> Optional[NeuralState]:
         """
