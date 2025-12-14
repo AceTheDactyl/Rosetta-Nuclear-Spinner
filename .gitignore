@@ -47,3 +47,4 @@ Thumbs.db
 
 # Archive (keep tracked but often large)
 # archive/
+training_run_*/
