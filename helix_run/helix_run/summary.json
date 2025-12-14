@@ -1,0 +1,14 @@
+{
+  "total_steps": 2000,
+  "k_formations": 224,
+  "final_z": 0.8660254037844386,
+  "final_kappa": 0.95,
+  "final_negentropy": 0.9979951280764396,
+  "final_eta": 0.9989970610949962,
+  "avg_negentropy": 0.7468524644511677,
+  "avg_kappa": 0.8025425012940235,
+  "avg_z": 0.7834230228186941,
+  "max_negentropy": 1.0,
+  "max_kappa": 0.95,
+  "max_z": 0.8660254037844386
+}

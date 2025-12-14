@@ -1,0 +1,12 @@
+{
+  "gates_passed": true,
+  "gate_results": {
+    "negentropy_pass": true,
+    "k_formations_pass": true,
+    "conservation_error_pass": true,
+    "final_z_pass": true
+  },
+  "k_formations": 224,
+  "final_z": 0.8660254037844386,
+  "final_negentropy": 0.9979951280764396
+}
