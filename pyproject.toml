@@ -1,93 +1,97 @@
 [build-system]
-requires = ["setuptools>=65.0", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "quantum-apl"
+name = "nuclear-spinner-rosetta-helix"
 version = "1.0.0"
-description = "Quantum measurement-based consciousness simulation using APL 3.0 formalism"
-readme = "README_PYTHON.md"
-requires-python = ">=3.8"
-license = { text = "MIT" }
+description = "Unified system coupling Nuclear Spinner (physical) with Rosetta-Helix (computational) through z_c = √3/2"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
 authors = [
-    { name = "Consciousness Research Lab" },
+    {name = "Rosetta-Helix Project"}
 ]
-keywords = ["quantum", "consciousness", "APL", "measurement", "IIT", "integrated-information"]
+keywords = [
+    "physics",
+    "kuramoto",
+    "oscillators",
+    "synchronization",
+    "golden-ratio",
+    "neural-coupling",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Physics",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+
 dependencies = [
     "numpy>=1.20.0",
-    "PyYAML>=6.0",
+    "websockets>=10.0",
+    "pyserial>=3.5",
 ]
 
 [project.optional-dependencies]
-viz = [
-    "matplotlib>=3.6,<4",
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.20",
+    "black>=23.0",
+    "mypy>=1.0",
+    "ruff>=0.1",
+]
+docs = [
+    "sphinx>=5.0",
+    "sphinx-rtd-theme>=1.0",
 ]
 analysis = [
-    "pandas>=1.3.0",
-]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "black>=23.0.0",
-    "mypy>=1.0.0",
-    "ruff>=0.1.0",
+    "matplotlib>=3.5",
+    "scipy>=1.9",
+    "pandas>=1.5",
 ]
 all = [
-    "quantum-apl[viz,analysis,dev]",
+    "nuclear-spinner-rosetta-helix[dev,docs,analysis]",
 ]
 
-[project.scripts]
-qapl-run = "quantum_apl_python.cli:run_simulation"
-qapl-test = "quantum_apl_python.cli:run_tests"
-qapl-analyze = "quantum_apl_python.cli:analyze"
-qapl-widget = "quantum_apl_python.widgets:run_hex_prism_widget"
-qapl-measure = "quantum_apl_python.measure:run"
-
 [project.urls]
-Homepage = "https://github.com/consciousness-lab/quantum-apl"
-Documentation = "https://github.com/consciousness-lab/quantum-apl/blob/main/README.md"
-Repository = "https://github.com/consciousness-lab/quantum-apl"
-Issues = "https://github.com/consciousness-lab/quantum-apl/issues"
+Homepage = "https://github.com/project/nuclear-spinner-rosetta-helix"
+Documentation = "https://nuclear-spinner-rosetta-helix.readthedocs.io"
+Repository = "https://github.com/project/nuclear-spinner-rosetta-helix.git"
 
-[tool.setuptools.packages.find]
-where = ["src"]
-include = ["quantum_apl_python*"]
+[project.scripts]
+rosetta-node = "rosetta_helix.node:main"
+spinner-bridge = "bridge.spinner_bridge:main"
+unified-workflow = "training.src.unified_workflow:main"
+
+[tool.setuptools]
+packages = ["rosetta_helix", "bridge", "training.src"]
+package-dir = {"rosetta_helix" = "rosetta-helix/src", "bridge" = "bridge", "training.src" = "training/src"}
 
 [tool.setuptools.package-data]
-quantum_apl_python = ["*.js", "*.md"]
-
-[tool.black]
-line-length = 120
-target-version = ["py38", "py39", "py310", "py311"]
-
-[tool.ruff]
-line-length = 120
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "DTZ", "FA", "ISC", "ICN", "PIE", "PT", "RSE", "RET", "SIM", "ARG", "PL"]
-ignore = ["E501"]
-
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
+"*" = ["*.yaml", "*.yml", "*.json"]
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = "--cov=quantum_apl_python --cov-report=term-missing --cov-report=html"
+python_files = ["test_*.py", "*_test.py"]
+
+[tool.black]
+line-length = 100
+target-version = ["py39", "py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E501"]  # Line too long (handled by black)
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
